@@ -86,11 +86,9 @@ $SFMLDir = (Get-Item .).FullName
 switch ($RID) {
     'win-x86' {
         $SFMLExtLibs = (Get-Item ./extlibs/libs-msvc-universal/x86).FullName
-        $SFMLAudioExtras = (Get-Item ./extlibs/bin/x86).FullName
     }
     'win-x64' {
         $SFMLExtLibs = (Get-Item ./extlibs/libs-msvc-universal/x64).FullName
-        $SFMLAudioExtras = (Get-Item ./extlibs/bin/x64).FullName
     }
     Default {
         Write-Error "Unknown RID '$RID'"
@@ -202,7 +200,6 @@ Copy-Module 'system'
 Copy-Module 'window'
 
 Write-Output "Copying Audio module extra files"
-Copy-Item "$SFMLAudioExtras/*" "$OutDir"
 
 Pop-Location # Pop CSFML
 Pop-Location # Pop $RID
