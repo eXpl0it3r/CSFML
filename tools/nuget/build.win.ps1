@@ -79,6 +79,8 @@ If (-not (Test-Path "SFML/.git")) {
     Ensure-Success
 }
 
+$SFMLInstallDir = (Get-Item .).FullName + "SFML-install"
+
 Push-Location "SFML"
 
 $SFMLDir = (Get-Item .).FullName
@@ -115,17 +117,18 @@ New-Push SFML
 $SFMLBuiltDir = Get-Location # The directory where SFML was built to. Used later to direct cmake when building CSFML
 
 cmake `
-    '-DBUILD_SHARED_LIBS=0' `
+    '-DBUILD_SHARED_LIBS=1' `
     '-DCMAKE_BUILD_TYPE=Release' `
     '-DCMAKE_SYSTEM_VERSION=8.1' `
-    '-DSFML_USE_STATIC_STD_LIBS=1' `
+    '-DSFML_USE_STATIC_STD_LIBS=0' `
     '-DSFML_BUILD_NETWORK=0' `
+    "-DCMAKE_INSTALL_PREFIX=$SFMLInstallDir" `
     "-G$Generator" `
     "-A$Architecture" `
     $SFMLDir
 Ensure-Success
 
-cmake --build . --config Release -- '-verbosity:minimal'
+cmake --build . --config Release --target install -- '-verbosity:minimal'
 Ensure-Success
 
 Pop-Location # Pop SFML
@@ -134,15 +137,15 @@ Pop-Location # Pop SFML
 # STEP 4: Build CSFML #
 # =================== #
 
-Write-Output "Building CSFML using SFML at $SFMLBuiltDir"
+Write-Output "Building CSFML using SFML at $SFMLInstallDir"
 New-Push CSFML
 
 New-Item -ItemType Directory lib > $null
 $CSFMLLibDir = (Get-Item lib).FullName; # The directory where the final CSFML dlls are located
 
 cmake `
-    "-DSFML_DIR=$SFMLBuiltDir" `
-    '-DCSFML_LINK_SFML_STATICALLY=1' `
+    "-DSFML_DIR=$SFMLInstallDir" `
+    '-DCSFML_LINK_SFML_STATICALLY=0' `
     "-DCMAKE_LIBRARY_PATH=$SFMLExtLibs" `
     `
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" `
@@ -193,6 +196,7 @@ function Copy-Module($module) {
     Write-Output "Copying CSFML $module"
 
     New-Item -ItemType Directory $OutDir -ErrorAction Ignore > $null
+    Copy-Item "$SFMLInstallDir/bin/sfml-$module-2.dll" "$OutDir" -Force > $null
     Copy-Item "$CSFMLLibDir/csfml-$module-2.dll" "$OutDir/csfml-$module.dll" -Force > $null
 }
 
